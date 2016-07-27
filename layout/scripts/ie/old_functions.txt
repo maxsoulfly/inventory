@@ -1,0 +1,107 @@
+
+$(".list-table .transaction .editSupply a.save").click(function() {
+    var thisTD = $(this).parent().parent().parent().parent().find('.transaction');
+    var thisInput = thisTD.find("input[name=transaction]");
+
+    // get the whole edit panel reference
+    var inputDiv = thisTD.find(".inputDiv");
+    // default span (with the link) reference
+    var toggle_wrapper = thisTD.find(".toggle-wrapper");
+    var add_delete = thisTD.find(".add_delete");
+
+    // variables that gonna go to the add_transaction.php ajax page
+    var to_location, from_location, product_id, completed, transaction_id;
+    product_id = thisTD.find("input[name=product_id]").val();
+    transaction_id = thisTD.find("input[name=transaction_id]").val();
+    to_location = $("#location_id").val();
+    from_location = 0;
+    completed = 1;
+    /* UPDATE TABLE AREA */
+    // get the new field value
+    fieldNewValue = thisInput.val();
+
+    if (fieldNewValue != fieldOldValue) {
+
+        $(this).children(0).removeClass("icon-ok").addClass(" icon-spinner icon-spin");
+        $(this).next().toggle();
+
+        console.log("transaction_id:"+transaction_id+", product_id:"+product_id+", amount:"+fieldNewValue);
+        $.ajax({
+            type: "POST",
+            url: "/inventory/pages/ajax/update_transaction.php",
+            data: {
+                transaction_id: transaction_id,
+                product_id: product_id,
+                amount: fieldNewValue
+            },
+            beforeSend: function () {
+                //alert("precessing");
+            },
+            success: function (data) {
+                // fieldNewValue - is the new value of the field, in this case - price (a)
+                var thisAmount = thisTD.next(); 				// amount 	(x) TD
+                var thisReceived = thisAmount.next();				// recieved (a*x) TD
+                var thisReturnAmount = thisReceived.next().find("input[name=returnAmount]").val(); // return amount (z)
+                var thisReturned = thisReceived.next().next();		// return amount (z) TD
+                var thisLeft = thisReturned.next();					// left amount (y) TD
+                var thisSoldTotal = thisLeft.next();				// sold total [(x-z-y)*a] TD
+                var tmpSoldVal = "";
+
+
+                thisTD.html(data);
+                $.ajax({type: "POST",url: "../ajax/get_location_product_amount.php",data: { location_id: to_location,product_id: product_id}, success: function(result){
+                    thisAmount.text(result);
+
+                    var price = thisTD.prev().find('a').text();
+                    // visible update of related value
+                    thisReceived.text("₪ " + (price * thisAmount.text()));
+                    thisReturned.text("₪ " + (price * thisReturnAmount));
+
+
+                    thisLeft.text(parseInt(thisLeft.text())+parseInt(fieldNewValue));
+                    tmpSoldVal = (thisAmount.text() - thisReturnAmount - thisLeft.text()) * price;
+                    if (tmpSoldVal < 0) tmpSoldVal = 0;
+                    thisSoldTotal.text("₪ " + tmpSoldVal);
+
+                    // mark green updated values
+                    thisTD.addClass("bg_green", "fast", function () {
+                        thisTD.removeClass("bg_green", "slow");
+                    });
+                    thisAmount.addClass("bg_green", "fast", function () {
+                        thisAmount.removeClass("bg_green", "slow");
+                    });
+                    thisReceived.addClass("bg_green", "fast", function () {
+                        thisReceived.removeClass("bg_green", "slow");
+                    });
+                    thisReturned.addClass("bg_green", "fast", function () {
+                        thisReturned.removeClass("bg_green", "slow");
+                    });
+                    thisLeft.addClass("bg_green", "fast", function () {
+                        thisLeft.removeClass("bg_green", "slow");
+                    });
+                    thisSoldTotal.addClass("bg_green", "fast", function () {
+                        thisSoldTotal.removeClass("bg_green", "slow");
+                    });
+                }});
+
+
+            },
+            error: function () {
+                //alert("oh no!");
+                //$("#putshithere").val("the field wasn't updated");
+                thisTD.addClass("bg_red", "fast", function () {
+                    thisTD.removeClass("bg_red", "slow");
+                });
+                toggle_wrapper.find('a[name=addSupply]').text(fieldOldValue);
+            }
+        });
+        $(this).children(0).removeClass("icon-spinner").removeClass("icon-spin").addClass(" icon-ok");
+        $(this).next().toggle();
+        inputDiv.addClass("hidden");
+        toggle_wrapper.show();
+        add_delete.show();
+    }
+
+
+
+});
