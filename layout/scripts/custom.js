@@ -1,12 +1,14 @@
 jQuery(document).ready(function ($) {
 
-	var root = "http://inventory.freeurmind.net/";
+    var root = "http://inventory.freeurmind.net/";   // WHEN ONLINE
+    //var root = "/inventory/";      // WHEN OFFLINE
 	var fieldOldValue = "";
 	var fieldNewValue = "";
 	/* list-table */
 
 	/*######### change product name ##############################################################################################*/
-    $("a[name=changeName]").click(function () {
+    $("a[name=changeName]").click(function (evt) {
+        evt.preventDefault();
         var thisName = $(this);
 		// default span (with the link) reference
         fieldOldValue = thisName.text();
@@ -28,7 +30,8 @@ jQuery(document).ready(function ($) {
 		return false;
 	});
 	
-	$(".list-table .product a.cancel").click(function() {
+	$(".list-table .product a.cancel").click(function (evt) {
+        evt.preventDefault();
 		var thisBtn = $(this);
 		// Get the input
 		var thisInput = thisBtn.parent().prev();
@@ -45,6 +48,7 @@ jQuery(document).ready(function ($) {
 	});
 	
 	$(".list-table .product a.save").click(function(evt) {
+        evt.preventDefault();
 		var thisBtn = $(this);
 		// Get the input
 		var thisInput = thisBtn.parent().prev();
@@ -106,7 +110,9 @@ jQuery(document).ready(function ($) {
 
 
     /*######### change product price ######################################################################################################*/
-    $("a[name=changePrice]").click(function (evt){
+    $("a[name=changePrice]").click(function (evt) {
+        evt.preventDefault();
+
         var thisPrice = $(this);
         // default span (with the link) reference
         var defaultSpan = thisPrice.parent();
@@ -124,6 +130,7 @@ jQuery(document).ready(function ($) {
     });
 
     $(".list-table .price a.cancel").click(function(evt) {
+        evt.preventDefault();
         var thisBtn = $(this);
         // Get the input
         var thisInput = thisBtn.parent().prev();
@@ -137,6 +144,7 @@ jQuery(document).ready(function ($) {
     });
 
     $(".list-table .price a.save").click(function(evt) {
+        evt.preventDefault();
         var thisBtn = $(this);
         // Get the input
         var thisInput = thisBtn.parent().prev();
@@ -281,7 +289,8 @@ jQuery(document).ready(function ($) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ---------- addSupply ------------------------------------------//
     // also true for add return
-	$("a[name=addSupply]").click(function (evt){
+	$("a[name=addSupply]").click(function (evt) {
+        evt.preventDefault();
 
 		var thisLink = $(this);
         var thisTD = thisLink.parent().parent();
@@ -320,7 +329,8 @@ jQuery(document).ready(function ($) {
     $(".list-table .return .editSupply a.cancel").click(cancelBtn);
 	$(".list-table .transaction .addSupply a.cancel").click(cancelBtn);
     $(".list-table .transaction .editSupply a.cancel").click(cancelBtn);
-    function cancelBtn() {
+    function cancelBtn(evt) {
+        evt.preventDefault();
         var thisBtn = $(this);
         //alert(thisBtn.html());
         // get the whole edit panel reference
@@ -341,7 +351,9 @@ jQuery(document).ready(function ($) {
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    $(".list-table .transaction .editSupply a.save").click(function() {
+    $(".list-table .transaction .editSupply a.save").click(function(evt) {
+        evt.preventDefault();
+
         var thisTD = $(this).parent().parent().parent().parent().find('.transaction');
         var thisInput = thisTD.find("input[name=transaction]");
 
@@ -402,7 +414,7 @@ jQuery(document).ready(function ($) {
                         thisReturned.text("₪ " + (price * thisReturnAmount));
 
 
-                        thisLeft.text(parseInt(thisLeft.text())+parseInt(fieldNewValue));
+                        thisLeft.text(parseFloat(thisLeft.text())+parseFloat(fieldNewValue));
                         tmpSoldVal = (thisAmount.text() - thisReturnAmount - thisLeft.text()) * price;
                         if (tmpSoldVal < 0) tmpSoldVal = 0;
                         thisSoldTotal.text("₪ " + tmpSoldVal);
@@ -450,7 +462,9 @@ jQuery(document).ready(function ($) {
 
     });
 
-    $(".list-table .transaction .addSupply a.save").click(function() {
+    $(".list-table .transaction .addSupply a.save").click(function(evt) {
+        evt.preventDefault();
+
         var thisTD = $(this).parent().parent().parent().parent().find('.transaction');
         var thisInput = $(this).parent().prev();
 
@@ -514,124 +528,12 @@ jQuery(document).ready(function ($) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//     SAVE EDIT TRANSACTION BUTTON
-//
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-    $(".list-table .transaction .editSupply a.save").click(function() {
-        var thisTD = $(this).parent().parent().parent().parent().find('.transaction');
-        var thisInput = $(this).parent().prev();
-
-        // get the whole edit panel reference
-        var inputDiv = $(this).parent().parent();
-        // default span (with the link) reference
-        var toggle_wrapper = inputDiv.prev();
-        var add_delete = inputDiv.next();
-
-        // variables that gonna go to the add_transaction.php ajax page
-        var to_location, from_location, product_id, completed;
-        product_id = thisInput.attr('id');
-        to_location = $("#location_id").val();
-        from_location = 0;
-        completed = 1;
-        /* UPDATE TABLE AREA
-        // get the new field value
-        fieldNewValue = thisInput.val();
-
-        if (fieldNewValue != fieldOldValue) {
-
-            $(this).children(0).removeClass("icon-ok").addClass(" icon-spinner icon-spin");
-            $(this).next().toggle();
-
-            // DEBUG: alert ("to_location:"+to_location+", from_location:"+from_location+", product_id:"+product_id+", amount:"+fieldNewValue+", completed:"+completed);
-            $.ajax({
-                type: "POST",
-                url: root+"/pages/ajax/add_transaction.php",
-                data: {
-                    to_location: to_location,
-                    from_location: from_location,
-                    product_id: product_id,
-                    amount: fieldNewValue,
-                    completed: completed
-                },
-                beforeSend: function () {
-                    //alert("precessing");
-                },
-                success: function (data) {
-                    // fieldNewValue - is the new value of the field, in this case - price (a)
-                    var thisAmount = thisTD.next(); 				// amount 	(x) TD
-                    var thisReceived = thisAmount.next();				// recieved (a*x) TD
-                    var thisReturnAmount = thisReceived.next().find("input[name=returnAmount]").val(); // return amount (z)
-                    var thisReturned = thisReceived.next().next();		// return amount (z) TD
-                    var thisLeft = thisReturned.next();					// left amount (y) TD
-                    var thisSoldTotal = thisLeft.next();				// sold total [(x-z-y)*a] TD
-                    var tmpSoldVal = "";
-
-
-                    thisTD.html(data);
-                    $.ajax({type: "POST",url: "../ajax/get_location_product_amount.php",data: { location_id: to_location,product_id: product_id}, success: function(result){
-                        thisAmount.text(result);
-
-                        var price = thisTD.prev().find('a').text();
-                        // visible update of related value
-                        thisReceived.text("₪ " + (price * thisAmount.text()));
-                        thisReturned.text("₪ " + (price * thisReturnAmount));
-
-
-                        thisLeft.text(parseInt(thisLeft.text())+parseInt(fieldNewValue));
-                        tmpSoldVal = (thisAmount.text() - thisReturnAmount - thisLeft.text()) * price;
-                        if (tmpSoldVal < 0) tmpSoldVal = 0;
-                        thisSoldTotal.text("₪ " + tmpSoldVal);
-
-                        // mark green updated values
-                        thisTD.addClass("bg_green", "fast", function () {
-                            thisTD.removeClass("bg_green", "slow");
-                        });
-                        thisAmount.addClass("bg_green", "fast", function () {
-                            thisAmount.removeClass("bg_green", "slow");
-                        });
-                        thisReceived.addClass("bg_green", "fast", function () {
-                            thisReceived.removeClass("bg_green", "slow");
-                        });
-                        thisReturned.addClass("bg_green", "fast", function () {
-                            thisReturned.removeClass("bg_green", "slow");
-                        });
-                        thisLeft.addClass("bg_green", "fast", function () {
-                            thisLeft.removeClass("bg_green", "slow");
-                        });
-                        thisSoldTotal.addClass("bg_green", "fast", function () {
-                            thisSoldTotal.removeClass("bg_green", "slow");
-                        });
-                    }});
-
-
-                },
-                error: function () {
-                    //alert("oh no!");
-                    //$("#putshithere").val("the field wasn't updated");
-                    thisTD.addClass("bg_red", "fast", function () {
-                        thisTD.removeClass("bg_red", "slow");
-                    });
-                    toggle_wrapper.find('a[name=addSupply]').text(fieldOldValue);
-                }
-            });
-            $(this).children(0).removeClass("icon-spinner").removeClass("icon-spin").addClass(" icon-ok");
-            $(this).next().toggle();
-            inputDiv.addClass("hidden");
-            toggle_wrapper.show();
-            add_delete.show();
-        }
-
-
-    });
-*/
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
 //     SAVE NEW RETURN BUTTON
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    $(".list-table .return .addSupply a.save").click(function() {
+    $(".list-table .return .addSupply a.save").click(function(evt) {
+        evt.preventDefault();
+
         var thisTD = $(this).parent().parent().parent().parent().find('.return');
         var thisInput = $(this).parent().prev();
 
@@ -699,8 +601,10 @@ jQuery(document).ready(function ($) {
 //     CHANGE AMOUNT LEFT BUTTON
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	$("a[name=changeAmountLeft]").click(function (evt){
-		var thisAmountLeft = $(this);
+	$("a[name=changeAmountLeft]").click(function (evt) {
+        evt.preventDefault();
+
+        var thisAmountLeft = $(this);
 		// default span (with the link) reference 
 		var defaultSpan = thisAmountLeft.parent();
 		// edit span (with the input) reference 
@@ -723,7 +627,9 @@ jQuery(document).ready(function ($) {
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	$(".list-table .amountLeft a.cancel").click(function(evt) {
-		var thisBtn = $(this);
+        evt.preventDefault();
+
+        var thisBtn = $(this);
 		// Get the input
 		var thisInput = thisBtn.parent().prev();
 		// get the whole edit panel reference
@@ -741,7 +647,9 @@ jQuery(document).ready(function ($) {
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	$(".list-table .amountLeft a.save").click(function(evt) {
-		var thisBtn = $(this);
+        evt.preventDefault();
+
+        var thisBtn = $(this);
 		// Get the input
 		var thisInput = thisBtn.parent().prev();
 		// get the whole edit panel reference
@@ -783,7 +691,7 @@ jQuery(document).ready(function ($) {
 					thisLeft.text(fieldNewValue);
 					
 					// visible update of related value
-					tmpSoldVal = (parseInt(thisAmount.text())-parseInt(thisReturnAmount)-parseInt(thisLeft.text()))*parseInt(price.text());
+					tmpSoldVal = (parseFloat(thisAmount.text())-parseFloat(thisReturnAmount)-parseFloat(thisLeft.text()))*parseFloat(price.text());
 
 					console.log(tmpSoldVal +"=("+thisAmount.text()+"-"+thisReturnAmount+"-"+thisLeft.text()+")*"+price.text());
 
@@ -961,6 +869,8 @@ jQuery(document).ready(function ($) {
 	
 	$("#editLocationName").click(editLocationName);
     function editLocationName(evt) {
+        evt.preventDefault();
+
         updateURL = "update_location_name.php";
         var thisName = $(this);
         var h1Title, h1Input, theInputItself;
@@ -984,6 +894,8 @@ jQuery(document).ready(function ($) {
 
 	$("[name=editCategoryName]").click(editCategoryName);
     function editCategoryName(evt) {
+        evt.preventDefault();
+
         updateURL = "update_category_name.php";
         console.log("updateURL changed to " + updateURL);
         var thisName = $(this);
@@ -1009,6 +921,8 @@ jQuery(document).ready(function ($) {
 
 	$("h1.title a.cancel").click(cancelUpdateTitle);
     function cancelUpdateTitle(evt) {
+        evt.preventDefault();
+
         var thisBtn = $(this);
         var h1Title, h1Input, theInputItself;
         // reference of the h1 title span above input
@@ -1026,6 +940,8 @@ jQuery(document).ready(function ($) {
 
     $("h1.title a.save").click(updateTitle);
     function updateTitle(evt) {
+        evt.preventDefault();
+
         var thisBtn = $(this);
         var h1Title, h1Input, theInputItself, tmp;
         // reference of the h1 title span above input
